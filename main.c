@@ -236,17 +236,11 @@
      case REPORT_ID_KEYBOARD:
      {
        // use to avoid send multiple consecutive zero report for keyboard
-          uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
-          if(has_keyboard_key) {
-            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-            return;
-          } 
-          if(KeybaordInput[Keyboard_I] == '\0') {
-            has_keyboard_key = true;  
-            Keyboard_Position = 0;
-            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-            return; 
-          }
+       if(has_keyboard_key) {
+        return;
+      } 
+
+       uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
         //  for(int i = 0;KeybaordInput[i] != '\0';i++) {
            uint8_t keycode[6] = { 0 };
            uint8_t modifier   = 0;
@@ -256,8 +250,19 @@
           
          
            printf("%c",KeybaordInput[Keyboard_I]);
-           tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
+           tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
         //  }
+        if(Keyboard_I == 255) {
+          tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
+          printf("\nIIX : = %c\n",KeybaordInput[Keyboard_I]);
+          return; 
+        }
+  
+        if(KeybaordInput[Keyboard_I] == '\0') {
+          has_keyboard_key = true;  
+          Keyboard_Position = 0;
+        }
+
      }
      break;
    }
@@ -267,7 +272,7 @@
  void hid_task(void)
  {
    // Poll every 10ms
-   const uint32_t interval_ms = 1000;
+   const uint32_t interval_ms = 300;
    static uint32_t start_ms = 0;
    static uint32_t touch_ms = 0;
    static bool touch_state = false;
@@ -285,12 +290,19 @@
  {
    (void) instance;
    (void) len;
- 
+   static uint8_t SendNULLKey = 0;
    uint8_t next_report_id = report[0] + 1u;
- 
+  
+
    if(has_keyboard_key == false) {
+    if(SendNULLKey) {
+      send_hid_report(REPORT_ID_KEYBOARD, 255);
+      SendNULLKey = 0;
+      return; 
+     }  
     Keyboard_Position++;
-    send_hid_report(REPORT_ID_KEYBOARD, Keyboard_Position); 
+    send_hid_report(REPORT_ID_KEYBOARD, Keyboard_Position);
+    SendNULLKey = 1;
     return;  
   }
  }
