@@ -30,9 +30,8 @@
  
  #include "bsp/board_api.h"
  #include "tusb.h"
- 
+ #include "CustomFunctions.h"
  #include "usb_descriptors.h"
- 
  #define UART_ID uart0
  
  #define UART_TX_PIN 0
@@ -56,7 +55,7 @@
  int switchData = 0;
  int IntStr = 0;
  uint8_t Keyboard_Position = 0;
- int16_t MousePosition[4];
+ int16_t MousePosition[6];
  char Position[64] = {'\0'};
  char KeybaordInput[128] = {'\0'};
  
@@ -101,6 +100,22 @@
              KeybaordInput[IntStr] = ch;
              uart_putc(UART_ID, ch);
              if((KeybaordInput[IntStr] == '\n')) {
+
+              int* Command = ReadCommands(KeybaordInput); // Reads if there any commands like (Enter, Backspace, etc...)
+              if(Command != 0) { // No Command
+               RemoveCommandString(KeybaordInput, Command[1]);
+               
+               KeybaordInput[Command[1]] = Command[0]; // Command[0] = The ascii value, Command[1] = the position of the prefix
+               KeybaordInput[Command[1] + 1] = '\0';
+               
+               IntStr = 0;
+               has_keyboard_key = false;  
+
+               printf("\nCommandExec : = %d\n",Command[0]);
+               Command = 0;
+               return;
+              }            
+
                KeybaordInput[IntStr] = '\0';
                has_keyboard_key = false;  
                  IntStr = 0;
@@ -228,7 +243,7 @@
        // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
        // printf("REPORT MOUSE HAS BEEN CALLED");
        // no button, right + down, no scroll, no pan
-       tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], 0, 0);
+       tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down
    
      }
      break;
@@ -239,12 +254,11 @@
        if(has_keyboard_key) {
         return;
       } 
-
+      
        uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
         //  for(int i = 0;KeybaordInput[i] != '\0';i++) {
            uint8_t keycode[6] = { 0 };
            uint8_t modifier   = 0;
-             
            if ( conv_table[KeybaordInput[Keyboard_I]][0] ) modifier = KEYBOARD_MODIFIER_LEFTSHIFT;
            keycode[0] = conv_table[KeybaordInput[Keyboard_I]][1];
           
@@ -278,6 +292,13 @@
    static bool touch_state = false;
    if ( board_millis() - start_ms < interval_ms) return; // not enough time
    start_ms += interval_ms;
+   if ( tud_suspended() )
+   {
+     // Wake up host if we are in suspend mode
+     // and REMOTE_WAKEUP feature is enabled by host
+     tud_remote_wakeup();
+   }
+ 
      // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
      send_hid_report(REPORT_ID_KEYBOARD, 0);
 
@@ -300,6 +321,7 @@
       SendNULLKey = 0;
       return; 
      }  
+     
     Keyboard_Position++;
     send_hid_report(REPORT_ID_KEYBOARD, Keyboard_Position);
     SendNULLKey = 1;

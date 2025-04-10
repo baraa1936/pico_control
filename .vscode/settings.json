@@ -40,6 +40,8 @@
         "usb_descriptors.h": "c",
         "board_api.h": "c",
         "stdlib.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "customfunctions.c": "c",
+        "stdio.h": "c"
     }
 }
