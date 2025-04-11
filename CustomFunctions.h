@@ -2,14 +2,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-char *CommandsList[6] = {"#BCS", "#ENT","#F12", "#DEL"};
-int CommandsInAcsii[6] = {8, 13, 0, 127}; // Backspace, Enter, NMP, Delete
-int Result[2] = {0, 0};
+char *CommandsList[6] = {"#BCS", "#ENT","#F12", "#DEL", "!FCP"};
+int CommandsInAcsii[6] = {8, 13, 0, 127, 0xFF}; // Backspace, Enter, NMP, Delete
+int Result[3] = {0, 0, 0};
 
 // Return the ascii value of the command
 int* ReadCommands(char* KeybaordInput) {
     char StringSaved[6]; 
 
+    int SizeCommandsList = sizeof(CommandsList) / sizeof(CommandsList[0]);
     int FoundCommandPrefix = 0;
     for(int i = 0;KeybaordInput[i] != '\0';i++) {
 
@@ -23,15 +24,43 @@ int* ReadCommands(char* KeybaordInput) {
                 StringSaved[k] = KeybaordInput[i + k];
             }
 
-            for(int k = 0;k < 5;k++) { // loop to check if this command exist
+            for(int k = 0;k < SizeCommandsList;k++) { // loop to check if this command exist
+                int Command = strncmp(StringSaved, CommandsList[k], 4);
+                if(!Command) {
+                    printf("F %d", CommandsInAcsii[k]);
+                    Result[0] = CommandsInAcsii[k];
+                    Result[1] = i;
+                    Result[2] = 0;
+
+                    return Result;
+                }; // currently this function only support end commands. using it mid-point may result a bug
+                if(k == SizeCommandsList - 1) {
+                    return NULL;    
+                }
+            }
+
+        } 
+        if(KeybaordInput[i] == '!') {
+            FoundCommandPrefix = 1;
+            for(int k = 0;k < 5;k++) { // loop to save the command into StringSaved
+                if(k == 4) {
+                    StringSaved[k] = '\0';
+                    continue;
+                }
+                StringSaved[k] = KeybaordInput[i + k];
+            }
+
+            for(int k = 0;k < SizeCommandsList;k++) { // loop to check if this command exist
                 int Command = strncmp(StringSaved, CommandsList[k], 4);
 
                 if(!Command) {
-                    Result[0] = CommandsInAcsii[k];
+                    
+                    Result[0] = 0;
                     Result[1] = i;
+                    Result[2] = 1;
                     return Result;
                 }; // currently this function only support end commands. using it mid-point may result a bug
-                if(k == 4) {
+                if(k == SizeCommandsList - 1) {
                     return NULL;    
                 }
             }

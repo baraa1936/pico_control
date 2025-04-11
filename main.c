@@ -52,8 +52,11 @@
    BLINK_SUSPENDED = 2500,
  };
  
+ 
  int switchData = 0;
+ int KeyCodeEnabled = 0;
  int IntStr = 0;
+ int IntStrKey = 0;
  uint8_t Keyboard_Position = 0;
  int16_t MousePosition[6];
  char Position[64] = {'\0'};
@@ -76,6 +79,8 @@
        // Can we send it back?
        if(ch == '$') {
            switchData = !switchData;
+           IntStr = 0;
+           IntStrKey = 0;
            uart_putc(UART_ID, '0' + switchData);
            return;
        }
@@ -93,32 +98,43 @@
              }
              /*
              if (switchData == 0) 
-             which is the keyboard
+                (the keyboard)
              */
            } else { 
  
-             KeybaordInput[IntStr] = ch;
+             KeybaordInput[IntStrKey] = ch;
              uart_putc(UART_ID, ch);
-             if((KeybaordInput[IntStr] == '\n')) {
+             if((KeybaordInput[IntStrKey] == '\n')) {
 
               int* Command = ReadCommands(KeybaordInput); // Reads if there any commands like (Enter, Backspace, etc...)
               if(Command != 0) { // No Command
+               
+              if(Command[2] == 1) {
+                KeyCodeEnabled = 1;
+                KeybaordInput[IntStrKey] = '\0';
+                IntStrKey = 0;
+                Command = 0;
+                has_keyboard_key = false;  
+                return;
+              }
+               KeyCodeEnabled = 0;
                RemoveCommandString(KeybaordInput, Command[1]);
                
                KeybaordInput[Command[1]] = Command[0]; // Command[0] = The ascii value, Command[1] = the position of the prefix
-               KeybaordInput[Command[1] + 1] = '\0';
+               KeybaordInput[Command[1] + 1] = '\0';   //
                
-               IntStr = 0;
+               IntStrKey = 0;
                has_keyboard_key = false;  
+              //  KeybaordInput[IntStr] = '\0';
 
-               printf("\nCommandExec : = %d\n",Command[0]);
+              //  printf("\nCommandExec : = %d\n",Command[0]);
                Command = 0;
                return;
               }            
 
-               KeybaordInput[IntStr] = '\0';
+               KeybaordInput[IntStrKey] = '\0';
                has_keyboard_key = false;  
-                 IntStr = 0;
+                 IntStrKey = 0;
                  return;
              }
  
@@ -127,7 +143,8 @@
        }
        IntStr++;
        chars_rxed++;
-   }
+       IntStrKey++;
+    }
    // uart_puts(UART_ID, Postion);
  }
  
@@ -259,6 +276,30 @@
         //  for(int i = 0;KeybaordInput[i] != '\0';i++) {
            uint8_t keycode[6] = { 0 };
            uint8_t modifier   = 0;
+           
+          if(KeyCodeEnabled == 1) {                
+            if(!strncmp("!FCP", KeybaordInput, 4)) {
+              modifier = KEYBOARD_MODIFIER_LEFTSHIFT;
+              keycode[0] = HID_KEY_F10;
+              tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
+              Keyboard_Position = 4; // WARNING : Editing Global Data
+            }
+            KeyCodeEnabled = 0;
+            return;
+          }
+
+          if(Keyboard_I == 255) {
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
+            printf("\nIIX : = %c\n",KeybaordInput[Keyboard_I]);
+            return; 
+          }
+    
+          if(KeybaordInput[Keyboard_I] == '\0') {
+            has_keyboard_key = true;  
+            Keyboard_Position = 0;
+          }  
+  
+
            if ( conv_table[KeybaordInput[Keyboard_I]][0] ) modifier = KEYBOARD_MODIFIER_LEFTSHIFT;
            keycode[0] = conv_table[KeybaordInput[Keyboard_I]][1];
           
@@ -266,16 +307,6 @@
            printf("%c",KeybaordInput[Keyboard_I]);
            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
         //  }
-        if(Keyboard_I == 255) {
-          tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-          printf("\nIIX : = %c\n",KeybaordInput[Keyboard_I]);
-          return; 
-        }
-  
-        if(KeybaordInput[Keyboard_I] == '\0') {
-          has_keyboard_key = true;  
-          Keyboard_Position = 0;
-        }
 
      }
      break;
