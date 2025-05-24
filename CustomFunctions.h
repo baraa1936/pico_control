@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-char *CommandsList[6] = {"#BCS", "#ENT","#F12", "#DEL", "!FCP"};
-int CommandsInAcsii[6] = {8, 13, 0, 127, 0xFF}; // Backspace, Enter, NMP, Delete
+char *CommandsList[6] = {"#BCS", "#ENT","#F12", "#DEL", "!FCP", "#TAB"};
+int CommandsInAcsii[6] = {8, 13, 0, 127, 0xFF, 9}; // Backspace, Enter, NMP, Delete, OOBE cmd, Tab
 int Result[3] = {0, 0, 0};
 
 // Return the ascii value of the command

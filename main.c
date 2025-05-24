@@ -62,6 +62,7 @@
  char Position[64] = {'\0'};
  char KeybaordInput[128] = {'\0'};
  
+ // Being static, its scope is limited to the file in which it is defined, and its value persists across function calls within that file. (AI Gen)
  static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
  static int chars_rxed = 0;
  static bool has_keyboard_key = true;
@@ -239,46 +240,39 @@
  // USB HID
  //--------------------------------------------------------------------+
  int rand() {
-   
+
  }
  
- static void send_hid_report(uint8_t report_id, uint8_t Keyboard_I)
+ static void send_hid_report(uint8_t report_id, uint8_t Keyboard_I) // Keyboard_I == The Keyboard inputs
  {
    // skip if hid is not ready yet
    if ( !tud_hid_ready() ) return;
  
    switch(switchData)
    {
-     case 0:
+     case 0: // Mouse Input
      {
-       // use to avoid send multiple consecutive zero report for keyboard
-       
-       // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
-       // printf("REPORT MOUSE HAS BEEN CALLED");
-       // no button, right + down, no scroll, no pan
+
        ReFormatingString(Position);
-       // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
-       // printf("REPORT MOUSE HAS BEEN CALLED");
-       // no button, right + down, no scroll, no pan
+
        tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down
-   
      }
      break;
  
      case REPORT_ID_KEYBOARD:
      {
        // use to avoid send multiple consecutive zero report for keyboard
-       if(has_keyboard_key) {
-        return;
-      } 
-      
-       uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
-        //  for(int i = 0;KeybaordInput[i] != '\0';i++) {
-           uint8_t keycode[6] = { 0 };
-           uint8_t modifier   = 0;
-           
+          if(has_keyboard_key) {
+            return;
+          } 
+          
+          uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
+
+          uint8_t keycode[6] = { 0 };
+          uint8_t modifier   = 0;
+              
           if(KeyCodeEnabled == 1) {                
-            if(!strncmp("!FCP", KeybaordInput, 4)) {
+            if(!strncmp("!FCP", KeybaordInput, 4)) { // !FCP, command used to open a shell in the windows OOBE. should be used with other commands to just be save?
               modifier = KEYBOARD_MODIFIER_LEFTSHIFT;
               keycode[0] = HID_KEY_F10;
               tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
@@ -288,25 +282,33 @@
             return;
           }
 
-          if(Keyboard_I == 255) {
+          if(Keyboard_I == 255) { // send NULL report to make the computer understand that the key is not pressed any more 
             tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
             printf("\nIIX : = %c\n",KeybaordInput[Keyboard_I]);
             return; 
           }
     
-          if(KeybaordInput[Keyboard_I] == '\0') {
+          if(KeybaordInput[Keyboard_I] == '\0') { // reach the end of the Keyboard Input
             has_keyboard_key = true;  
             Keyboard_Position = 0;
           }  
   
+          if(KeybaordInput[Keyboard_I] == '\\') { // a stupid workaround to use the Backslash key in the uk keyboard
+            keycode[0] = HID_KEY_BACKSLASH;
+            modifier = KEYBOARD_MODIFIER_RIGHTALT;
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
+            return;
+          }
 
-           if ( conv_table[KeybaordInput[Keyboard_I]][0] ) modifier = KEYBOARD_MODIFIER_LEFTSHIFT;
-           keycode[0] = conv_table[KeybaordInput[Keyboard_I]][1];
+        if ( conv_table[KeybaordInput[Keyboard_I]][0] ) {
+          modifier = KEYBOARD_MODIFIER_LEFTSHIFT;
+        }
+
+        keycode[0] = conv_table[KeybaordInput[Keyboard_I]][1];
           
          
-           printf("%c",KeybaordInput[Keyboard_I]);
-           tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
-        //  }
+        printf("%c",KeybaordInput[Keyboard_I]); // (printf is not Recomanded to be used with the pico-sdk )
+        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
 
      }
      break;
