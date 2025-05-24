@@ -1,2 +1,4 @@
-This is a copy of the hid_composite example from TinyUSB (https://github.com/hathach/tinyusb/tree/master/examples/device/hid_composite)
-showing how to build with TinyUSB when using the Raspberry Pi Pico SDK
+Pico control is an intrnal tool used for the (AIX-301)
+To convert uart commands to keyboard and mouse outputs using the pi pico type-c port.
+
+This project uses tinyUSB and pico-sdk.
