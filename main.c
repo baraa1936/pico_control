@@ -77,7 +77,7 @@
  void on_uart_rx() { // this function will only read 4 bytes in the loop at a time 
    while (uart_is_readable(UART_ID)) { 
        uint8_t ch = uart_getc(UART_ID);
-       // Can we send it back?
+
        if(ch == '$') {
            switchData = !switchData;
            IntStr = 0;
@@ -86,9 +86,9 @@
            return;
        }
        if (uart_is_writable(UART_ID)) {
-           // Change it slightly first!
-           // ch++;
-           if(switchData != 1) {
+
+        
+          if(switchData != 1) {
              
              Position[IntStr] = ch;
              uart_putc(UART_ID, ch);
