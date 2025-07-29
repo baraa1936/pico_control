@@ -25,6 +25,10 @@
 #ifndef USB_DESCRIPTORS_H_
 #define USB_DESCRIPTORS_H_
 
+/**
+ * Position of REPORT_ID_MOUSE HAS BEEN CHANGED
+ */
+
 enum
 {
   REPORT_ID_KEYBOARD = 1,

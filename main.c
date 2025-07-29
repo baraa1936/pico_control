@@ -148,21 +148,6 @@
    // uart_puts(UART_ID, Postion);
  }
  
- /* ---------- Data Formating ------------ */
- void ReFormatingString(char* StringPosition) {
-   int i = 0;
-   char* StringSpliter = strtok(StringPosition, ","); // Split String into Tokens
-   char* endptr;
-   while(StringSpliter != NULL) {
-     MousePosition[i] = strtol(StringSpliter, &endptr, 10); //  String to Integer
-     i++;
-     // printf("%s", StringSpliter);
-     StringSpliter = strtok(NULL, ",");
-   }
-   // printf("\nX%d, Y%d\n", MousePosition[0], MousePosition[1]);
- } 
- 
- 
  
  /*------------- MAIN -------------*/
  int main(void)
@@ -256,7 +241,7 @@
        // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
        // printf("REPORT MOUSE HAS BEEN CALLED");
        // no button, right + down, no scroll, no pan
-       ReFormatingString(Position);
+       ReFormatingString(Position, MousePosition);
        // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
        // printf("REPORT MOUSE HAS BEEN CALLED");
        // no button, right + down, no scroll, no pan
