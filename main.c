@@ -91,11 +91,19 @@
              
              Position[IntStr] = ch;
              uart_putc(UART_ID, ch);
+
              if((Position[IntStr] == '\n')) {
                Position[IntStr] = '\0';
                  IntStr = 0;
                  return;
              }
+
+             if((Position[0] == 0x11)) {
+               Position[IntStr] = '\0';
+                 IntStr = 0;
+                 return;
+             }
+
              /*
              if (switchData == 0) 
                 (the keyboard)
@@ -107,7 +115,7 @@
              if((KeybaordInput[IntStrKey] == '\n')) {
 
               int* Command = ReadCommands(KeybaordInput); // Reads if there any commands like (Enter, Backspace, etc...)
-              if(Command != 0) { // No Command
+              if(Command != NULL) { // No Command
                
               if(Command[2] == 1) {
                 KeyCodeEnabled = 1;
@@ -128,7 +136,7 @@
               //  KeybaordInput[IntStr] = '\0';
 
               //  printf("\nCommandExec : = %d\n",Command[0]);
-               Command = 0;
+               Command = NULL;
                return;
               }            
 
@@ -242,10 +250,19 @@
        // printf("REPORT MOUSE HAS BEEN CALLED");
        // no button, right + down, no scroll, no pan
        ReFormatingString(Position, MousePosition);
-       // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
-       // printf("REPORT MOUSE HAS BEEN CALLED");
+      //  printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
+      //  printf("REPORT MOUSE HAS BEEN CALLED");
        // no button, right + down, no scroll, no pan
        tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down
+       
+       Position[0] = 0x11;
+
+       for (uint8_t X = 0; X < 6; X++) // i to X because the compiler got confised
+       {
+        MousePosition[X] = 0; // reset every filled
+       }
+       
+       
    
      }
      break;
@@ -332,6 +349,7 @@
   
 
    if(has_keyboard_key == false) {
+
     if(SendNULLKey) {
       send_hid_report(REPORT_ID_KEYBOARD, 255);
       SendNULLKey = 0;
