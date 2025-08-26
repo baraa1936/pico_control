@@ -98,11 +98,11 @@
                  return;
              }
 
-             if((Position[0] == 0x11)) {
-               Position[IntStr] = '\0';
-                 IntStr = 0;
-                 return;
-             }
+            //  if((Position[0] == 0x11)) {
+            //    Position[IntStr] = '\0';
+            //      IntStr = 0;
+            //      return;
+            //  }
 
              /*
              if (switchData == 0) 
@@ -255,12 +255,16 @@
        // no button, right + down, no scroll, no pan
        tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down
        
-       Position[0] = 0x11;
+      // reset position and IntStr
 
-       for (uint8_t X = 0; X < 6; X++) // i to X because the compiler got confised
-       {
-        MousePosition[X] = 0; // reset every filled
-       }
+      /** WARNING EDITING GLOABL VARABLES */
+        // Position[0] = '\0';
+        // IntStr = 0;
+
+      //  for (uint8_t X = 0; X < 2; X++) // i to X because the compiler got confised
+      //  {
+      //   MousePosition[X] = 0; // reset every filled
+      //  }
        
        
    
@@ -292,7 +296,7 @@
 
           if(Keyboard_I == 255) {
             tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-            printf("\nIIX : = %c\n",KeybaordInput[Keyboard_I]);
+            // printf("\nIIX : = %c\n",KeybaordInput[Keyboard_I]);
             return; 
           }
     
@@ -306,7 +310,7 @@
            keycode[0] = conv_table[KeybaordInput[Keyboard_I]][1];
           
          
-           printf("%c",KeybaordInput[Keyboard_I]);
+          //  printf("%c",KeybaordInput[Keyboard_I]);
            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
         //  }
 
