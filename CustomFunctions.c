@@ -3,7 +3,9 @@
 #include <string.h>
 #include <stdint.h>
 
-
+/**
+ * recives a string and return the values between 
+ */
 void ReFormatingString(char* StringPosition, uint16_t* MousePosition) {
     int i = 0;
     char* StringSpliter = strtok(StringPosition, ","); // Split String into Tokens
@@ -25,8 +27,8 @@ void RemoveCommandString(char *KeyboardInput, int PrefixPlace) {
     }
 }
 
-char *CommandsList[6] = {"#BCS", "#ENT","#F12", "#DEL", "!FCP"};
-int CommandsInAcsii[6] = {8, 13, 0, 127, 0xFF}; // Backspace, Enter, NMP, Delete
+const char const *CommandsList[6] = {"#BCS", "#ENT","#F12", "#DEL", "!FCP"};
+const int CommandsInAcsii[6] = {8, 13, 0, 127, 0xFF}; // Backspace, Enter, NMP, Delete
 int Result[3] = {0, 0, 0};
 
 

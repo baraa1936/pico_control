@@ -72,7 +72,7 @@
  void hid_task(void);
  
  
- /*--------------URAT INTERPET-----------*/
+ /*--------------URAT INTERRUPT-----------*/
  void on_uart_rx() { // this function will only read 4 bytes in the loop at a time 
    while (uart_is_readable(UART_ID)) { 
        uint8_t ch = uart_getc(UART_ID);
@@ -231,9 +231,6 @@
  //--------------------------------------------------------------------+
  // USB HID
  //--------------------------------------------------------------------+
- int rand() {
-   
- }
  
  static void send_hid_report(uint8_t report_id, uint8_t Keyboard_I)
  {
@@ -244,14 +241,13 @@
    {
      case 0:
      {
-       // use to avoid send multiple consecutive zero report for keyboard
        
        // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
        // printf("REPORT MOUSE HAS BEEN CALLED");
-       // no button, right + down, no scroll, no pan
+       
        ReFormatingString(Position, MousePosition);
-      //  printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
-      //  printf("REPORT MOUSE HAS BEEN CALLED");
+       //  printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
+       //  printf("REPORT MOUSE HAS BEEN CALLED");
        // no button, right + down, no scroll, no pan
        tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down
        
