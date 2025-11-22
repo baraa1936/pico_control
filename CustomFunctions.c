@@ -97,7 +97,7 @@ int* ReadCommands(char* KeybaordInput) {
 }
 
 int ReadMainFunction(char* KeyboardInput) { // return Eaother 1 or 0, 1 is mouse , 0 is for keyboard
-    char* FunctionsName = {"Kbd()", "Mus()"};
+    char FunctionsName[2][5] = {"Kbd()", "Mus()"};
     char Input_Function[5];
     strncpy(KeyboardInput, Input_Function, 4);
     

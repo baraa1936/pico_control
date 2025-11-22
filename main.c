@@ -59,15 +59,17 @@
  int Started_Command = 0;
  int KeyCodeEnabled = 0;
  int IntStr = 0;
- int IntStrKey = 0;
+
  uint8_t Keyboard_Position = 0;
  int16_t MousePosition[6];
- char Position[64] = {'\0'};
+
  char KeybaordInput[128] = {'\0'};
- 
- static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
- static int chars_rxed = 0;
+ char Position[64] = {'\0'};
+
  static bool has_keyboard_key = true;
+ static int chars_rxed = 0;
+ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
+
  
  ssd1306_t disp;
 
@@ -80,82 +82,30 @@
  void on_uart_rx() { // this function will only read 4 bytes in the loop at a time 
    while (uart_is_readable(UART_ID)) { 
        uint8_t ch = uart_getc(UART_ID);
-       // Can we send it back?
-      //  if(ch == '$') {
-      //      switchData = !switchData;
-      //      IntStr = 0;
-      //      IntStrKey = 0;
-      //      uart_putc(UART_ID, '0' + switchData);
-      //      return;
-      //  }
-       if(Started_Command == 0) {
-       switchData = ReadMainFunction(KeybaordInput);
-       Started_Command = 1;
-       }
-       
+       KeybaordInput[IntStr] = ch;
+      if(Started_Command == 0) {
+
+        if(KeybaordInput[IntStr] == '(') {
+            switchData = ReadMainFunction(KeybaordInput);
+            Started_Command = 1;
+        }
+        
+      }  
+
        if (uart_is_writable(UART_ID)) {
-           // Change it slightly first!
-           // ch++;
-           if(switchData != 1) {
-             
-             Position[IntStr] = ch;
-             uart_putc(UART_ID, ch); // Output the input
 
-             if((Position[IntStr] == ')')) {
-                Position[IntStr] = '\0';
-                Position[IntStr + 1] = '\0'; // next char ("\n")
-                return;
-             }
-             
-
-             /*
-             if (switchData == 0) 
-                (the keyboard)
-             */
-           } else { 
- 
-             KeybaordInput[IntStrKey] = ch;
-             uart_putc(UART_ID, ch); // Output the input
-             if((KeybaordInput[IntStrKey] == '\n')) {
-
-              int* Command = ReadCommands(KeybaordInput); // Reads if there any commands like (Enter, Backspace, etc...)
-              if(Command != NULL) { // No Command
-               
-              if(Command[2] == 1) {
-                KeyCodeEnabled = 1;
-                KeybaordInput[IntStrKey] = '\0';
-                IntStrKey = 0;
-                Command = 0;
-                has_keyboard_key = false;  
-                return;
-              }
-               KeyCodeEnabled = 0;
-               RemoveCommandString(KeybaordInput, Command[1]);
-               
-               KeybaordInput[Command[1]] = Command[0]; // Command[0] = The ascii value, Command[1] = the position of the prefix
-               KeybaordInput[Command[1] + 1] = '\0';   //
-               
-               IntStrKey = 0;
-               has_keyboard_key = false;  
-              //  KeybaordInput[IntStr] = '\0';
-
-              //  printf("\nCommandExec : = %d\n",Command[0]);
-               Command = NULL;
-               return;
-              }            
-
-               KeybaordInput[IntStrKey] = '\0';
-               has_keyboard_key = false;  
-                 IntStrKey = 0;
-                 return;
-             }
- 
-           }  
-                   
+        if(Started_Command == 1) {
+            if(switchData == 0) {
+              uart_puts("Keyboard", UART_ID);
+            }
+            if(switchData == 1) {
+              uart_puts("Mouse", UART_ID);
+            }
+            
+          }
        }
        IntStr++;
        chars_rxed++;
-       IntStrKey++;
     }
    // uart_puts(UART_ID, Postion);
  }
@@ -278,7 +228,7 @@
      case 0:
      {
        
-       
+       strcpy("1000,1000", Position);
        ReFormatingString(Position, MousePosition); // type [] , type []
 
        // no button, right + down, no scroll, no pan
