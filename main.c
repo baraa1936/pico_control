@@ -27,7 +27,9 @@
  #include <stdio.h>
  #include <string.h>
  #include "pico/stdlib.h"
- 
+
+ #include "ssd1306.h"
+
  #include "bsp/board_api.h"
  #include "tusb.h"
  #include "CustomFunctions.h"
@@ -54,6 +56,7 @@
  
  
  int switchData = 0;
+ int Started_Command = 0;
  int KeyCodeEnabled = 0;
  int IntStr = 0;
  int IntStrKey = 0;
@@ -66,7 +69,8 @@
  static int chars_rxed = 0;
  static bool has_keyboard_key = true;
  
- 
+ ssd1306_t disp;
+
  
  void led_blinking_task(void);
  void hid_task(void);
@@ -77,26 +81,37 @@
    while (uart_is_readable(UART_ID)) { 
        uint8_t ch = uart_getc(UART_ID);
        // Can we send it back?
-       if(ch == '$') {
-           switchData = !switchData;
-           IntStr = 0;
-           IntStrKey = 0;
-           uart_putc(UART_ID, '0' + switchData);
-           return;
+      //  if(ch == '$') {
+      //      switchData = !switchData;
+      //      IntStr = 0;
+      //      IntStrKey = 0;
+      //      uart_putc(UART_ID, '0' + switchData);
+      //      return;
+      //  }
+       if(Started_Command == 0) {
+       switchData = ReadMainFunction(KeybaordInput);
+       Started_Command = 1;
        }
+       
        if (uart_is_writable(UART_ID)) {
            // Change it slightly first!
            // ch++;
            if(switchData != 1) {
              
              Position[IntStr] = ch;
-             uart_putc(UART_ID, ch);
+             uart_putc(UART_ID, ch); // Output the input
 
-             if((Position[IntStr] == '\n')) {
-               Position[IntStr] = '\0';
-                 IntStr = 0;
-                 return;
+             if((Position[IntStr] == ')')) {
+                Position[IntStr] = '\0';
+                Position[IntStr + 1] = '\0'; // next char ("\n")
+                return;
              }
+
+            //  if((Position[IntStr] == '\n')) {
+            //    Position[IntStr] = '\0';
+            //    IntStr = 0;
+            //    return;
+            //  } ========= old Mathed
 
             //  if((Position[0] == 0x11)) {
             //    Position[IntStr] = '\0';
@@ -111,7 +126,7 @@
            } else { 
  
              KeybaordInput[IntStrKey] = ch;
-             uart_putc(UART_ID, ch);
+             uart_putc(UART_ID, ch); // Output the input
              if((KeybaordInput[IntStrKey] == '\n')) {
 
               int* Command = ReadCommands(KeybaordInput); // Reads if there any commands like (Enter, Backspace, etc...)
@@ -157,12 +172,31 @@
  }
  
  
+ /*----------INIT THE SSD1306 DISPLAY------------*/
+
+ void setup_gpios() {
+  i2c_init(i2c_default, 400 * 1000); // seams like the ssd1306 need 400kHz
+  gpio_set_function(PICO_DEFAULT_I2C_SDA_PIN, GPIO_FUNC_I2C);
+  gpio_set_function(PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C);
+  gpio_pull_up(PICO_DEFAULT_I2C_SDA_PIN);
+  gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
+
+  disp.external_vcc=false;
+  ssd1306_init(&disp, 128, 64, 0x3C, i2c_default);
+  ssd1306_clear(&disp);
+
+ }
+
+
  /*------------- MAIN -------------*/
  int main(void)
  {
+   int ssd1306;
    board_init();
    stdio_init_all();
    // init device stack on configured roothub port
+   setup_gpios();
+
    tusb_rhport_init_t dev_init = {
      .role = TUSB_ROLE_DEVICE,
      .speed = TUSB_SPEED_AUTO
@@ -173,7 +207,7 @@
    {
      board_init_after_tusb();
    }
- 
+   
    int UART_IRQ = UART_ID == uart0 ? UART0_IRQ : UART1_IRQ;
  
    // And set up and enable the interrupt handlers
@@ -187,7 +221,9 @@
    // Lets send a basic string out, and then run a loop and wait for RX interrupts
    // The handler will count them, but also reflect the incoming data back with a slight change!
    uart_puts(UART_ID, "\nHello, uart interrupts\n");
- 
+   ssd1306_clear(&disp);
+   ssd1306_draw_string(&disp, 10, 24, 2, "Powered One");
+   ssd1306_show(&disp);
    while (1)
    {
      tud_task(); // tinyusb device task
@@ -195,6 +231,7 @@
      
      hid_task();
    }
+   
  }
  
  //--------------------------------------------------------------------+
@@ -204,13 +241,20 @@
  // Invoked when device is mounted
  void tud_mount_cb(void)
  {
+   ssd1306_clear(&disp);
    blink_interval_ms = BLINK_MOUNTED;
+   ssd1306_draw_string(&disp, 10, 24, 2, "MOUNTED");
+   ssd1306_show(&disp);
  }
  
  // Invoked when device is unmounted
  void tud_umount_cb(void)
  {
+   ssd1306_clear(&disp);
    blink_interval_ms = BLINK_NOT_MOUNTED;
+   ssd1306_draw_string(&disp, 10, 24, 2, "UNMOUNTED");
+   ssd1306_show(&disp);
+
  }
  
  // Invoked when usb bus is suspended
@@ -232,7 +276,10 @@
  // USB HID
  //--------------------------------------------------------------------+
  
- static void send_hid_report(uint8_t report_id, uint8_t Keyboard_I)
+
+ // Main commands [Mus(), Kbd()]
+
+ static void send_hid_report(uint8_t report_id, uint8_t Keyboard_I) // Keyboard_I is the position of the character in the string 
  {
    // skip if hid is not ready yet
    if ( !tud_hid_ready() ) return;
@@ -242,27 +289,11 @@
      case 0:
      {
        
-       // printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
-       // printf("REPORT MOUSE HAS BEEN CALLED");
        
        ReFormatingString(Position, MousePosition);
-       //  printf("%d 0, %d 1 \n", MousePosition[0], MousePosition[1]);
-       //  printf("REPORT MOUSE HAS BEEN CALLED");
+
        // no button, right + down, no scroll, no pan
-       tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down
-       
-      // reset position and IntStr
-
-      /** WARNING EDITING GLOABL VARABLES */
-        // Position[0] = '\0';
-        // IntStr = 0;
-
-      //  for (uint8_t X = 0; X < 2; X++) // i to X because the compiler got confised
-      //  {
-      //   MousePosition[X] = 0; // reset every filled
-      //  }
-       
-       
+       tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down       
    
      }
      break;
