@@ -112,3 +112,11 @@ int ReadMainFunction(char* KeyboardInput) { // return Eaother 1 or 0, 1 is mouse
     
     return -1;
 }
+
+void LeftShift(char* KeyboardInput) {
+    char NewString[128] = "";
+    for(int i = 0;KeyboardInput[i] != '\0';i++) {
+        NewString[i] = KeyboardInput[i + 1];
+    };
+    KeyboardInput = NewString;
+}

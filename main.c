@@ -106,18 +106,7 @@
                 Position[IntStr + 1] = '\0'; // next char ("\n")
                 return;
              }
-
-            //  if((Position[IntStr] == '\n')) {
-            //    Position[IntStr] = '\0';
-            //    IntStr = 0;
-            //    return;
-            //  } ========= old Mathed
-
-            //  if((Position[0] == 0x11)) {
-            //    Position[IntStr] = '\0';
-            //      IntStr = 0;
-            //      return;
-            //  }
+             
 
              /*
              if (switchData == 0) 
@@ -290,7 +279,7 @@
      {
        
        
-       ReFormatingString(Position, MousePosition);
+       ReFormatingString(Position, MousePosition); // type [] , type []
 
        // no button, right + down, no scroll, no pan
        tud_hid_abs_mouse_report(REPORT_ID_MOUSE, MousePosition[2], MousePosition[0], MousePosition[1], MousePosition[3], MousePosition[4]); // click, x, y, wheel up, wheel down       

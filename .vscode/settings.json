@@ -40,6 +40,8 @@
     "files.associations": {
         "ssd1306.h": "c",
         "stdlib.h": "c",
-        "sstream": "c"
+        "sstream": "c",
+        "format": "c",
+        "streambuf": "c"
     }
 }
